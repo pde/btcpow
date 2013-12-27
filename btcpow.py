@@ -64,6 +64,7 @@ hardware = [
 ]
 
 def standard_model():
+<<<<<<< HEAD
   h_available = []
   for pos, h in enumerate(hardware):
     h_available.append(h)
@@ -106,7 +107,5 @@ def standard_model():
       # without turning anything off yet...
       burn_rate = sum([gen.total_units * gen.power for gen in h_available])
       print when, burn_rate / MW, "MW"
-        
-        prev_hashrate = hashrate
 
 standard_model()
