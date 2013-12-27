@@ -10,7 +10,7 @@ GH = GW = 1000 * MH
 TH = TW = 1000 * GH
 PH = PW = 1000 * TH
 
-capacities, usd_prices = {}
+capacities, usd_prices = {}, {}
 
 with open('data/hash_rate.json', 'r') as f:
   capacities = [(date.fromtimestamp(x['x']),
@@ -37,18 +37,18 @@ res_electricity_price = 0.10 #USD per J
 # Radeon intoduction dates from Wikipedia;
 # FPGA introduction dates from 
 class hw:
-  def __init__(self, name, d, hashes, price, power):
-    self.name = name
-    self.date = d
-    self.hashes = hashes
-    self.price = price
-    self.power = power
-    self.hash_efficiency = hashes / price
-    self.power_efficiency = hashes / power
-    self.total_units = 0
-  def new_cap(self, capacity):
-    new_units = capacity / self.hashes
-    self.total_units += new_units
+    def __init__(self, name, d, hashes, price, power):
+        self.name = name
+        self.date = d
+        self.hashes = hashes
+        self.price = price
+        self.power = power
+        self.hash_efficiency = hashes / price
+        self.power_efficiency = hashes / power
+        self.total_units = 0
+    def new_cap(self, capacity):
+        new_units = capacity / self.hashes
+        self.total_units += new_units
         
 hardware = [
   hw("Radeon 4350", date(2008,9,30), 10.7 * MH, 20, 40),
@@ -64,48 +64,49 @@ hardware = [
 ]
 
 def standard_model():
-<<<<<<< HEAD
-  h_available = []
-  for pos, h in enumerate(hardware):
-    h_available.append(h)
-    best = max([gen.hash_efficiency for gen in h_available])
-    print "best", best
-    # MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
-    # will still be getting some deployment, but at a fraction proportional only to its "quality"
-    for gen in h_available:
-      gen.quality = gen.hash_efficiency / best
-    plausible = [gen for gen in h_available if gen.hash_efficiency > (best / 10.)]
-    total_q = sum([gen.quality for gen in plausible])
+    h_available = []
+    for pos, h in enumerate(hardware):
+        h_available.append(h)
+        best = max([gen.hash_efficiency for gen in h_available])
+        print "best", best
+        # MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
+        # will still be getting some deployment, but at a fraction proportional only to its "quality"
+        for gen in h_available:
+            gen.quality = gen.hash_efficiency / best
+        plausible = [gen for gen in h_available if gen.hash_efficiency > (best / 10.)]
+        total_q = sum([gen.quality for gen in plausible])
 
-    prev_hashrate = 0
-    for when, hashrate in capacities:
-      
-      # iterate from the start of this hardware epoch
-      if when < h.date: 
-        prev_hashate = hashrate
-        continue
-      # until the end
-      try: 
-        if when > hardware[pos+1].date: break
-      except: 
-        pass  # fencepost
-      
-      
-      new_hashing = hashrate - prev_hashrate
-      if new_hashing < 0:
-        # SIMPLIFY: skip forward in time until there is actual growth
-        continue
+        prev_hashrate = 0
+        for when, hashrate in capacities:
+            
+            # iterate from the start of this hardware epoch
+            if when < h.date: 
+                prev_hashate = hashrate
+                continue
+            # until the end
+            try: 
+                if when > hardware[pos+1].date: break
+            except: 
+                pass  # fencepost
+            
+            
+            new_hashing = hashrate - prev_hashrate
+            if new_hashing < 0:
+                # SIMPLIFY: skip forward in time until there is actual growth
+                continue
 
-    print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
-      
-      for gen in plausible:
-        # each piece of plausible hardware is turned on with a capacity
-        # equal to its proportion of the total quality
-        gen.new_cap(new_hashing * (gen.quality / total_q))
-      
-     
-      # without turning anything off yet...
-      burn_rate = sum([gen.total_units * gen.power for gen in h_available])
-      print when, burn_rate / MW, "MW"
+            print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
+            
+            for gen in plausible:
+                # each piece of plausible hardware is turned on with a capacity
+                # equal to its proportion of the total quality
+                gen.new_cap(new_hashing * (gen.quality / total_q))
+            
+         
+            # without turning anything off yet...
+            burn_rate = sum([gen.total_units * gen.power for gen in h_available])
+            print when, burn_rate / MW, "MW"
+        
+            prev_hashrate = hashrate
 
 standard_model()
