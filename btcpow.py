@@ -132,47 +132,50 @@ hardware = [
   hw("KNC Saturn", date(2013,10,3), 200 * GH, 320, 3000)
 ]
 
-h_available = []
-for pos, h in enumerate(hardware):
-    h_available.append(h)
-    best = max([gen.hash_efficiency for gen in h_available])
-    print "best", best
-    # MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
-    # will still be getting some deployment, but at a fraction proportional only to its "quality"
-    for gen in h_available:
-        gen.quality = gen.hash_efficiency / best
-    plausible = [gen for gen in h_available if gen.hash_efficiency > (best / 10.)]
-    total_q = sum([gen.quality for gen in plausible])
+def standard_model():
+	h_available = []
+	for pos, h in enumerate(hardware):
+		h_available.append(h)
+		best = max([gen.hash_efficiency for gen in h_available])
+		print "best", best
+		# MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
+		# will still be getting some deployment, but at a fraction proportional only to its "quality"
+		for gen in h_available:
+			gen.quality = gen.hash_efficiency / best
+		plausible = [gen for gen in h_available if gen.hash_efficiency > (best / 10.)]
+		total_q = sum([gen.quality for gen in plausible])
 
-    prev_hashrate = 0
-    for when, hashrate in capacities:
-        
-        # iterate from the start of this hardware epoch
-        if when < h.date: 
-            prev_hashate = hashrate
-            continue
-        # until the end
-        try: 
-            if when > hardware[pos+1].date: break
-        except: 
-            pass  # fencepost
-        
-        
-        new_hashing = hashrate - prev_hashrate
-        if new_hashing < 0:
-            # SIMPLIFY: skip forward in time until there is actual growth
-            continue
+		prev_hashrate = 0
+		for when, hashrate in capacities:
+			
+			# iterate from the start of this hardware epoch
+			if when < h.date: 
+				prev_hashate = hashrate
+				continue
+			# until the end
+			try: 
+				if when > hardware[pos+1].date: break
+			except: 
+				pass  # fencepost
+			
+			
+			new_hashing = hashrate - prev_hashrate
+			if new_hashing < 0:
+				# SIMPLIFY: skip forward in time until there is actual growth
+				continue
 
-	print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
-        
-        for gen in plausible:
-            # each piece of plausible hardware is turned on with a capacity
-            # equal to its proportion of the total quality
-            gen.new_cap(new_hashing * (gen.quality / total_q))
-        
-     
-        # without turning anything off yet...
-        burn_rate = sum([gen.total_units * gen.power for gen in h_available])
-        print when, burn_rate / MW, "MW"
+		print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
+			
+			for gen in plausible:
+				# each piece of plausible hardware is turned on with a capacity
+				# equal to its proportion of the total quality
+				gen.new_cap(new_hashing * (gen.quality / total_q))
+			
+		 
+			# without turning anything off yet...
+			burn_rate = sum([gen.total_units * gen.power for gen in h_available])
+			print when, burn_rate / MW, "MW"
         
         prev_hashrate = hashrate
+
+standard_model()
