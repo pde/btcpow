@@ -4,14 +4,16 @@ import json
 
 print date.fromtimestamp(0)
 
-# TIME SERIES INPUTS
+# Unit conversions
 MH = MW = 1000000
 GH = GW = 1000 * MH
 TH = TW = 1000 * GH
 PH = PW = 1000 * TH
 
-capacities, usd_prices = {}, {}
+# Read in historical data on BTC price and network hash rate
+# Latest data can be fetched from https://blockchain.info/stats 
 
+capacities, usd_prices = {}, {}
 with open('data/hash_rate.json', 'r') as f:
   capacities = [(date.fromtimestamp(x['x']),
                    x['y'] * GH)
