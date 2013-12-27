@@ -176,6 +176,6 @@ def standard_model():
             burn_rate = sum([gen.total_units * gen.power for gen in h_available])
             print when, burn_rate / MW, "MW"
         
-        prev_hashrate = hashrate
+            prev_hashrate = hashrate
 
 standard_model()
