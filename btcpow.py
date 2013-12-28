@@ -65,7 +65,7 @@ class hw:
             if d >= start and d <= end:
                 payoff = 144. * 25 * price
                 unit_payoff = proportion * price
-                on = (unit_payoff / self.power) > res_electricity_price
+                on = (unit_payoff / self.power) > ind_electricity_price
                 #print self.name, "pays", unit_payoff * 3600 * 24, "/day and is", on ,
                 #print (unit_payoff / self.power), "dollars per joule"
                 if on:
@@ -76,7 +76,7 @@ class hw:
                         self.on = True
                     return True
         if self.on: 
-            print self.name, "now off (%f%% of network)" % (proportion * self.total_units * 100)
+            print self.name, "now off (%f%% of network)" % (proportion * self.total_units * 100), "unit payoff", unit_payoff *3600* 24, "/day"
             self.on = False
         return False
         
