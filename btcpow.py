@@ -94,7 +94,7 @@ usd_prices = [(date.fromtimestamp(ts), price) for (ts,price) in data]
 #Electricity prices, converted from quoted USD per kWh to USD per J
 conversion_factor = 1.0/(1000*60*60)
 ind_electricity_price = 0.06 * conversion_factor #USD per J
-res_electricity_price = 0.10 #USD per J
+res_electricity_price = 0.10 * conversion_factor #USD per J
 
 # Epochs of best mining hardware
 
@@ -115,9 +115,37 @@ class hw:
         self.hash_efficiency = hashes / price
         self.power_efficiency = hashes / power
         self.total_units = 0
+        self.on = True
+
     def new_cap(self, capacity):
         new_units = capacity / self.hashes
         self.total_units += new_units
+
+    def running(self, start, end, network_hashrate):
+        # Assume that a rig is turned off it fails to cover its power costs for
+        # an entire generation of hardware.  This assumes miners are slightly
+        # bullish about the future price of BTC, which fits their psychology
+        # and is rational given BTC's deflationary monetary policy algorithm
+
+        proportion = self.hashes / network_hashrate
+        for (d,price) in usd_prices:
+            if d >= start and d <= end:
+                payoff = 144. * 25 * price
+                unit_payoff = proportion * price
+                on = (unit_payoff / self.power) > res_electricity_price
+                #print self.name, "pays", unit_payoff * 3600 * 24, "/day and is", on ,
+                #print (unit_payoff / self.power), "dollars per joule"
+                if on:
+                    # The rig paid or its electicity this period, so it will
+                    # keep running until new hardware is out
+                    if not self.on:
+                        print self.name, "HAS TURNED BACK ON"
+                        self.on = True
+                    return True
+        if self.on: 
+            print self.name, "now off (%f%% of network)" % (proportion * self.total_units * 100)
+            self.on = False
+        return False
         
 hardware = [
   hw("Radeon 4350", date(2008,9,30), 10.7 * MH, 20, 40),
@@ -136,6 +164,7 @@ def standard_model():
     h_available = []
     for pos, h in enumerate(hardware):
         h_available.append(h)
+        print h.name, "available", h.date
         best = max([gen.hash_efficiency for gen in h_available])
         print "best", best
         # MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
@@ -146,7 +175,7 @@ def standard_model():
         total_q = sum([gen.quality for gen in plausible])
 
         prev_hashrate = 0
-        for when, hashrate in capacities:
+        for pos2, (when, hashrate) in enumerate(capacities):
             
             # iterate from the start of this hardware epoch
             if when < h.date: 
@@ -164,7 +193,7 @@ def standard_model():
                 # SIMPLIFY: skip forward in time until there is actual growth
                 continue
 
-            print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
+            #print "incremental hashrate", new_hashing, "(%d plausible rigs)" % len(plausible)
             
             for gen in plausible:
                 # each piece of plausible hardware is turned on with a capacity
@@ -173,7 +202,9 @@ def standard_model():
             
          
             # without turning anything off yet...
-            burn_rate = sum([gen.total_units * gen.power for gen in h_available])
+            try: when_next = capacities[pos2 + 1][0]
+            except: when_next = when # end of series
+            burn_rate = sum([gen.total_units * gen.power for gen in h_available if gen.running(when, when_next, hashrate)])
             print when, burn_rate / MW, "MW"
         
             prev_hashrate = hashrate
