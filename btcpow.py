@@ -5,10 +5,10 @@ import json
 print date.fromtimestamp(0)
 
 # Unit conversions
-MH = MW = 1000000
-GH = GW = 1000 * MH
-TH = TW = 1000 * GH
-PH = PW = 1000 * TH
+MJ = MH = MW = 1000000
+GJ = GH = GW = 1000 * MH
+TJ = TH = TW = 1000 * GH
+PJ = PH = PW = 1000 * TH
 
 # Read in historical data on BTC price and network hash rate
 # Latest data can be fetched from https://blockchain.info/stats 
@@ -29,6 +29,15 @@ conversion_factor = 1.0/(1000*60*60)
 ind_electricity_price = 0.06 * conversion_factor #USD per J
 res_electricity_price = 0.10 * conversion_factor #USD per J
 
+
+# Emobdied energy estimate from:
+# http://www.aceee.org/files/proceedings/2012/data/papers/0193-000301.pdf
+# Rigs vary in their character from large desktop-PC style devices to
+# much smaller units; we pick a laptop emobdied energy minus an LCD as
+# a representative estimate
+
+embodied_energy_per_rig = (4790 - 1233) * MJ
+
 # Epochs of best mining hardware
 
 # List of:
@@ -48,11 +57,14 @@ class hw:
         self.hash_efficiency = hashes / price
         self.power_efficiency = hashes / power
         self.total_units = 0
+        self.embodied_energy = 0
         self.on = True
 
     def new_cap(self, capacity):
         new_units = capacity / self.hashes
         self.total_units += new_units
+        self.embodied_energy += embodied_energy_per_rig * new_units
+
 
     def running(self, start, end, network_hashrate):
         # Assume that a rig is turned off it fails to cover its power costs for
@@ -95,6 +107,7 @@ hardware = [
 
 def standard_model():
     h_available = []
+    # Iterate over the epochs when new hardware becomes available
     for pos, h in enumerate(hardware):
         h_available.append(h)
         print h.name, "available", h.date
@@ -108,6 +121,7 @@ def standard_model():
         total_q = sum([gen.quality for gen in plausible])
 
         prev_hashrate = 0
+        prev_embodied = 0
         for pos2, (when, hashrate) in enumerate(capacities):
             
             # iterate from the start of this hardware epoch
@@ -138,8 +152,23 @@ def standard_model():
             try: when_next = capacities[pos2 + 1][0]
             except: when_next = when # end of series
             burn_rate = sum([gen.total_units * gen.power for gen in h_available if gen.running(when, when_next, hashrate)])
-            print when, burn_rate / MW, "MW"
+            print when, burn_rate / MW, "MW consumed",
+
+            # Include embodied energy in the calculation
+            embodied = sum([gen.embodied_energy for gen in h_available])
+            elapsed = (when_next - when).total_seconds() # timedelta objects
+            if elapsed:
+              newly_embodied = ((embodied - prev_embodied) / elapsed) 
+              print newly_embodied / MW, "MW embodied in new hardware"
+              burn_rate += newly_embodied
+            else:
+              # use the previous estimate 
+              print "~", newly_embodied / MW, "MW newly embodied"
+              burn_rate += newly_embodied 
+
+            print "Total energy consumption rate:", burn_rate / MW,  "MW"
         
             prev_hashrate = hashrate
+            prev_embodied = embodied
 
 standard_model()
