@@ -10,25 +10,27 @@ GJ = GH = GW = 1000 * MH
 TJ = TH = TW = 1000 * GH
 PJ = PH = PW = 1000 * TH
 
+#Read in data from JSON, smooth it by averaging data in bins, and apply a transformation func
+def read_data(filename, func=lambda x,y: (x, y), bin_size=1):
+  new_data = []
+  with open(filename, 'r') as f:
+    data = json.load(f)['values']
+    while len(data) > 0:
+      next_bin_size = min(bin_size, len(data))
+      new_data.append(func(sum([x['x'] for x in data[:bin_size]]) / float(next_bin_size),
+                           sum([x['y'] for x in data[:bin_size]]) / float(next_bin_size)))
+      data = data[bin_size:]
+  return new_data
+
 # Read in historical data on BTC price and network hash rate
-# Latest data can be fetched from https://blockchain.info/stats 
-
-capacities, usd_prices = {}, {}
-with open('data/hash_rate.json', 'r') as f:
-  capacities = [(date.fromtimestamp(x['x']),
-                   x['y'] * GH)
-                   for x in json.load(f)['values']]
-
-with open('data/price.json', 'r') as f:
-  usd_prices = [(date.fromtimestamp(x['x']),
-                   x['y'])
-                   for x in json.load(f)['values']]
+bin_size = 10
+capacities = read_data('data/hash_rate.json', lambda x,y: (date.fromtimestamp(x), y * GH), bin_size)
+usd_prices = read_data('data/price.json', lambda x,y: (date.fromtimestamp(x), y), bin_size)
 
 #Electricity prices, converted from quoted USD per kWh to USD per J
 conversion_factor = 1.0/(1000*60*60)
 ind_electricity_price = 0.06 * conversion_factor #USD per J
 res_electricity_price = 0.10 * conversion_factor #USD per J
-
 
 # Emobdied energy estimate from:
 # http://www.aceee.org/files/proceedings/2012/data/papers/0193-000301.pdf
