@@ -60,3 +60,13 @@ hardware = [
   hw("Block Erupter blade", date(2013,4,1),10.7 * GH, 83, 350),
   hw("KNC Saturn", date(2013,10,3), 200 * GH, 320, 3000)
 ]
+
+# This could be extended for all future rewards
+block_rewards = [
+  (date(2009,01,01), 50.0),
+  (date(2012,01,01), 25.0),
+  (date(2017,01,01), 12.5),
+]
+
+genesis_date = date(2009,01,01)
+
