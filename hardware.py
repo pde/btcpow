@@ -3,9 +3,9 @@ from datetime import date
 
 # Simple class to represent a piece of hardware
 class hw:
-    def __init__(self, name, d, hashes, price, power):
+    def __init__(self, name, date, hashes, price, power):
         self.name = name
-        self.date = d
+        self.available_date = date
         self.hashes = hashes
         self.price = price
         self.power = power

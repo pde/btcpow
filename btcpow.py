@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 from datetime import date
 
+import sys
+
 # local files
 from constants import *
 
 def standard_model():
     h_available = []
     # Iterate over the epochs when new hardware becomes available
-    for pos, h in enumerate(hardware):
+    for pos, (unused_date, h) in enumerate(hardware):
         h_available.append(h)
-        print h.name, "available", h.date
+        print h.name, "available", h.available_date
         best = max([gen.hash_efficiency for gen in h_available])
         print "best", best
         # MODEL: anything that's not more than ten times worse than the best hardware (hash/$)
@@ -24,12 +26,12 @@ def standard_model():
         for pos2, (when, hashrate) in enumerate(capacities):
             
             # iterate from the start of this hardware epoch
-            if when < h.date: 
+            if when < h.available_date: 
                 prev_hashate = hashrate
                 continue
             # until the end
             try: 
-                if when > hardware[pos+1].date: break
+                if when > hardware[pos+1][1].available_date: break
             except: 
                 pass  # fencepost
             

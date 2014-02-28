@@ -61,6 +61,8 @@ while d < date.today():
   
 #date_ranges += extended_ranges
 
+date_ranges += [(date(2013,01,01), date(2013,12,31))]
+
 for (s, e) in date_ranges:
 
   s = max(s, genesis_date)
