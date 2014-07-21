@@ -41,6 +41,11 @@ bin_size = 10
 capacities = read_data('data/hash_rate.json', lambda x,y: (date.fromtimestamp(x), y * GH), bin_size)
 usd_prices = read_data('data/price.json', lambda x,y: (date.fromtimestamp(x), y), bin_size)
 
+# For now, this is just a single data point
+electricity_price_usd_j = [
+  (date(2009,01,01), ind_electricity_price),
+]
+
 # List of:
 # (name, date introduced, hashes / sec, power consumption)
 # picking some of the more popular entries from https://en.bitcoin.it/wiki/Mining_hardware_comparison
@@ -71,10 +76,11 @@ block_rewards = [
 ]
 
 all_time_series = {
-"block_rewards": block_rewards,
+"block_reward": block_rewards,
 "hardware": hardware,
-"usd_prices": usd_prices,
-"capacities": capacities,
+"exchange_rate_usd_bitcoin": usd_prices,
+"capacity": capacities,
+"electricity_price_usd_j": electricity_price_usd_j,
 }
 genesis_date = date(2009,01,01)
 

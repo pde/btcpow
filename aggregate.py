@@ -62,6 +62,7 @@ while d < date.today():
 #date_ranges += extended_ranges
 
 date_ranges += [(date(2013,01,01), date(2013,12,31))]
+date_ranges += [(date(2014,01,01), date(2014,07,01))]
 
 for (s, e) in date_ranges:
 
